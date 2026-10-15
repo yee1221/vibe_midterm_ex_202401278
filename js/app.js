@@ -1,69 +1,63 @@
-const choiceForm = document.querySelector("#choiceForm");
-const choiceInput = document.querySelector("#choiceInput");
-const choiceList = document.querySelector("#choiceList");
-const choiceCount = document.querySelector("#choiceCount");
-const emptyState = document.querySelector("#emptyState");
-const clearButton = document.querySelector("#clearButton");
+// ========================================
+// LUCKY SLOT — GAME LOGIC
+// Lever / Vertical Reels / Random Results
+// ========================================
 
-const spinButton = document.querySelector("#spinButton");
-const lever = document.querySelector("#lever");
-const leverHint = document.querySelector("#leverHint");
-const reelFrame = document.querySelector("#reelFrame");
+const spinButton = document.getElementById("spinButton");
+const buttonText = document.getElementById("buttonText");
+const leverAssembly = document.getElementById("leverAssembly");
+const machineStatus = document.getElementById("machineStatus");
+const resultElement = document.getElementById("result");
 
-const resultPanel = document.querySelector("#resultPanel");
-const resultCaption = document.querySelector("#resultCaption");
-const resultText = document.querySelector("#resultText");
+const choiceForm = document.getElementById("choiceForm");
+const choiceInput = document.getElementById("choiceInput");
+const choiceList = document.getElementById("choiceList");
+const choiceCount = document.getElementById("choiceCount");
 
-const reels = [
-  document.querySelector("#reel1"),
-  document.querySelector("#reel2"),
-  document.querySelector("#reel3")
-];
-
-const symbols = ["7", "★", "BAR", "♦", "♠", "♣", "✦"];
+const reelIds = ["reel1", "reel2", "reel3"];
+const symbols = ["7", "★", "♦", "●", "✳", "♠"];
 
 let choices = [];
 let isSpinning = false;
-let timers = [];
+
+// ----------------------------------------
+// Choice management
+// ----------------------------------------
+
+function updateChoiceCount() {
+  choiceCount.textContent =
+    `${String(choices.length).padStart(2, "0")} ITEMS`;
+}
 
 function renderChoices() {
   choiceList.replaceChildren();
 
   choices.forEach((choice, index) => {
     const item = document.createElement("li");
-    item.className = "choice-item";
-
     const text = document.createElement("span");
+    const removeButton = document.createElement("button");
+
     text.textContent = choice;
+    removeButton.type = "button";
+    removeButton.textContent = "REMOVE";
+    removeButton.setAttribute(
+      "aria-label",
+      `${choice} 선택지 삭제`
+    );
 
-    const deleteButton = document.createElement("button");
-    deleteButton.type = "button";
-    deleteButton.className = "delete-choice";
-    deleteButton.textContent = "×";
-    deleteButton.setAttribute("aria-label", `${choice} 삭제`);
-
-    deleteButton.addEventListener("click", () => {
+    removeButton.addEventListener("click", () => {
       if (isSpinning) return;
 
       choices.splice(index, 1);
       renderChoices();
-      resetResult();
+      updateChoiceCount();
     });
 
-    item.append(text, deleteButton);
-    choiceList.append(item);
+    item.append(text, removeButton);
+    choiceList.appendChild(item);
   });
 
-  choiceCount.textContent = choices.length;
-  emptyState.hidden = choices.length > 0;
-  clearButton.hidden = choices.length === 0;
-  spinButton.disabled = isSpinning || choices.length === 0;
-}
-
-function resetResult() {
-  resultPanel.classList.remove("winner");
-  resultCaption.textContent = "YOUR DESTINY AWAITS";
-  resultText.textContent = "What will luck bring?";
+  updateChoiceCount();
 }
 
 choiceForm.addEventListener("submit", (event) => {
@@ -82,117 +76,192 @@ choiceForm.addEventListener("submit", (event) => {
   choiceInput.value = "";
 
   renderChoices();
-  resetResult();
-  leverHint.textContent = "READY WHEN YOU ARE";
   choiceInput.focus();
 });
 
-clearButton.addEventListener("click", () => {
-  if (isSpinning) return;
+// ----------------------------------------
+// Reel setup
+// ----------------------------------------
 
-  choices = [];
-  renderChoices();
-  resetResult();
-  leverHint.textContent = "ADD YOUR CHOICES & PULL";
+const reels = reelIds.map((id) => {
+  const strip = document.getElementById(id);
+  const windowElement = strip.parentElement;
+
+  return {
+    strip,
+    windowElement,
+    symbolHeight: 0,
+    animation: null
+  };
 });
 
-function delay(ms) {
-  return new Promise((resolve) => {
-    const timer = setTimeout(resolve, ms);
-    timers.push(timer);
+function createSymbol(value) {
+  const symbol = document.createElement("div");
+  symbol.className = "symbol";
+  symbol.textContent = value;
+  return symbol;
+}
+
+function setupReel(reel, values) {
+  reel.strip.replaceChildren();
+
+  values.forEach((value) => {
+    reel.strip.appendChild(createSymbol(value));
+  });
+
+  reel.symbolHeight =
+    reel.strip.querySelector(".symbol").getBoundingClientRect().height;
+}
+
+function resetReels() {
+  reels.forEach((reel) => {
+    if (reel.animation) {
+      reel.animation.cancel();
+      reel.animation = null;
+    }
+
+    setupReel(reel, ["7"]);
+    reel.strip.style.transform = "translateY(0)";
   });
 }
 
-function setReelSymbol(reel, symbol) {
-  reel.innerHTML = "";
+// ----------------------------------------
+// Lever animation
+// ----------------------------------------
 
-  const span = document.createElement("span");
-  span.textContent = symbol;
-  reel.append(span);
+function pullLever() {
+  return new Promise((resolve) => {
+    leverAssembly.classList.remove("pulling");
+
+    // Allow the browser to register the starting position.
+    void leverAssembly.offsetWidth;
+
+    leverAssembly.classList.add("pulling");
+
+    setTimeout(() => {
+      leverAssembly.classList.remove("pulling");
+
+      // Lever returns to its raised position.
+      setTimeout(resolve, 380);
+    }, 430);
+  });
 }
 
-function randomSymbol() {
-  return symbols[Math.floor(Math.random() * symbols.length)];
+// ----------------------------------------
+// Vertical reel spinning
+// ----------------------------------------
+
+function spinReel(reel, duration, finalDelay = 0) {
+  return new Promise((resolve) => {
+    const spinSymbols = [];
+
+    // Build a long vertical strip of passing symbols.
+    for (let i = 0; i < 34; i++) {
+      spinSymbols.push(
+        symbols[Math.floor(Math.random() * symbols.length)]
+      );
+    }
+
+    // Finish on 7. The final three reels show 777.
+    spinSymbols.push("7");
+
+    setupReel(reel, spinSymbols);
+
+    const totalDistance =
+      reel.symbolHeight * (spinSymbols.length - 1);
+
+    reel.animation = reel.strip.animate(
+      [
+        { transform: "translateY(0)" },
+        { transform: `translateY(-${totalDistance}px)` }
+      ],
+      {
+        duration,
+        delay: finalDelay,
+        easing: "cubic-bezier(0.12, 0.75, 0.18, 1)",
+        fill: "forwards"
+      }
+    );
+
+    reel.animation.onfinish = () => {
+      reel.strip.style.transform =
+        `translateY(-${totalDistance}px)`;
+
+      reel.animation = null;
+      resolve();
+    };
+
+    reel.animation.oncancel = resolve;
+  });
 }
 
-async function spinReel(reel, index) {
-  reel.classList.remove("stopping");
-  reel.classList.add("spinning");
+// ----------------------------------------
+// Game sequence
+// ----------------------------------------
 
-  const duration = 1250 + index * 800;
-  const interval = setInterval(() => {
-    setReelSymbol(reel, randomSymbol());
-  }, 85);
+async function playGame() {
+  if (isSpinning) return;
 
-  await delay(duration);
-
-  clearInterval(interval);
-  reel.classList.remove("spinning");
-
-  setReelSymbol(reel, "7");
-  reel.classList.add("stopping");
-
-  await delay(220);
-  reel.classList.remove("stopping");
-}
-
-async function playSlotMachine() {
-  if (isSpinning || choices.length === 0) return;
+  if (choices.length === 0) {
+    resultElement.textContent = "Add a choice to begin.";
+    choiceInput.focus();
+    return;
+  }
 
   isSpinning = true;
-  renderChoices();
+  spinButton.disabled = true;
+  buttonText.textContent = "SPINNING...";
+  machineStatus.textContent = "MACHINE IN MOTION";
+  resultElement.textContent = "The odds are turning...";
 
-  timers.forEach(clearTimeout);
-  timers = [];
-
-  resetResult();
-  reelFrame.classList.remove("jackpot");
-  lever.classList.add("pulling");
-
-  leverHint.textContent = "GOOD LUCK...";
-  resultCaption.textContent = "THE REELS ARE SPINNING";
-  resultText.textContent = "Waiting for your lucky moment";
-
-  await delay(360);
-  lever.classList.remove("pulling");
-
-  reels.forEach((reel) => {
-    reel.classList.remove("spinning", "stopping");
-  });
+  resetReels();
 
   try {
-    await Promise.all([
-      spinReel(reels[0], 0),
-      spinReel(reels[1], 1).then(() => delay(0)),
-      spinReel(reels[2], 2).then(() => delay(0))
-    ]);
+    // Pull down, then automatically return the lever.
+    await pullLever();
 
-    // 최종 릴 표시는 항상 777
-    reels.forEach((reel) => setReelSymbol(reel, "7"));
-    reelFrame.classList.add("jackpot");
+    // Start all three reels with different stopping times.
+    const spinPromises = reels.map((reel, index) => {
+      return spinReel(
+        reel,
+        1700 + index * 650,
+        index * 120
+      );
+    });
 
-    leverHint.textContent = "JACKPOT!";
-    resultCaption.textContent = "777 — JACKPOT";
+    // Stop each reel sequentially.
+    for (let index = 0; index < spinPromises.length; index++) {
+      await spinPromises[index];
 
-    await delay(650);
+      machineStatus.textContent =
+        index < 2
+          ? `REEL ${index + 1} LOCKED`
+          : "ALL REELS LOCKED";
+    }
 
-    // 모든 선택지가 동일한 확률로 선택됨
-    const winner = choices[
-      Math.floor(Math.random() * choices.length)
-    ];
+    // Randomly select from the user's current choices.
+    const winner =
+      choices[Math.floor(Math.random() * choices.length)];
 
-    resultText.textContent = winner;
-    resultCaption.textContent = "LUCK HAS CHOSEN";
-    resultPanel.classList.add("winner");
-    leverHint.textContent = "PULL AGAIN TO TRY YOUR LUCK";
+    resultElement.textContent = winner;
+    machineStatus.textContent = "WINNER SELECTED";
+    buttonText.textContent = "PLAY AGAIN";
+  } catch (error) {
+    console.error("Slot animation error:", error);
+    resultElement.textContent = "Something went wrong. Try again.";
+    machineStatus.textContent = "MACHINE READY";
+    buttonText.textContent = "PULL TO PLAY";
   } finally {
     isSpinning = false;
-    renderChoices();
+    spinButton.disabled = false;
   }
 }
 
-spinButton.addEventListener("click", playSlotMachine);
+spinButton.addEventListener("click", playGame);
 
-// 초기 화면
+// ----------------------------------------
+// Initial state
+// ----------------------------------------
+
+resetReels();
 renderChoices();
-resetResult();
