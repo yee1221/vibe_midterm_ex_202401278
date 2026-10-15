@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#100d0a">
+  <title>777 — Lucky Slot</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/app.js" defer></script>
+</head>
+<body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+
+  <header class="site-header">
+    <span class="header-mark">★</span>
+    <span>THE LUCKY CLUB</span>
+    <span class="header-status">EST. 1977</span>
+  </header>
+
+  <main class="main-content">
+    <section class="hero">
+      <p class="eyebrow">YOUR CHOICE, YOUR LUCK</p>
+      <h1 class="brand-title">Lucky Slot</h1>
+      <p class="hero-description">
+        Pull the lever. Trust your luck.
+      </p>
+    </section>
+
+    <section class="machine-section" aria-label="슬롯머신">
+      <div class="machine">
+        <div class="machine-top">
+          <span class="top-star">✦</span>
+          <span class="machine-name">LUCKY SEVEN</span>
+          <span class="top-star">✦</span>
+        </div>
+
+        <div class="machine-light-row" aria-hidden="true">
+          <span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span>
+        </div>
+
+        <div class="machine-body">
+          <div class="display-heading">YOUR LUCKY NUMBER</div>
+
+          <div class="reel-frame" id="reelFrame">
+            <div class="reel-window">
+              <div class="reel" id="reel1">
+                <span>7</span>
+              </div>
+            </div>
+            <div class="reel-window">
+              <div class="reel" id="reel2">
+                <span>★</span>
+              </div>
+            </div>
+            <div class="reel-window">
+              <div class="reel" id="reel3">
+                <span>BAR</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="jackpot-label">
+            <span>✦</span> JACKPOT <span>✦</span>
+          </div>
+
+          <div class="lever-hint" id="leverHint">
+            ADD YOUR CHOICES & PULL
+          </div>
+
+          <div class="machine-controls">
+            <button class="spin-button" id="spinButton" type="button">
+              <span class="button-icon">★</span>
+              <span>PULL TO PLAY</span>
+            </button>
+          </div>
+
+          <div class="machine-bottom-lights" aria-hidden="true">
+            <span></span><span></span><span></span>
+            <span></span><span></span><span></span>
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+
+        <div class="machine-base">
+          <span>LUCK FAVORS THE BOLD</span>
+        </div>
+
+        <div class="lever" id="lever">
+          <div class="lever-joint"></div>
+          <div class="lever-arm"></div>
+          <div class="lever-ball"></div>
+        </div>
+      </div>
+
+      <div class="result-panel" id="resultPanel" aria-live="polite">
+        <p class="result-caption" id="resultCaption">YOUR DESTINY AWAITS</p>
+        <p class="result-text" id="resultText">
+          What will luck bring?
+        </p>
+      </div>
+    </section>
+
+    <section class="choice-section">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">SET YOUR DESTINY</p>
+          <h2>Your Choices</h2>
+        </div>
+        <span class="choice-count"><b id="choiceCount">0</b> ITEMS</span>
+      </div>
+
+      <form class="choice-form" id="choiceForm">
+        <label class="sr-only" for="choiceInput">추첨할 선택지</label>
+        <input
+          id="choiceInput"
+          type="text"
+          maxlength="40"
+          placeholder="무엇을 선택할까요?"
+          autocomplete="off"
+        >
+        <button type="submit" id="addButton">ADD +</button>
+      </form>
+
+      <p class="input-note">
+        원하는 항목을 입력하고 추가하세요. 모든 항목은 동일한 확률로 추첨됩니다.
+      </p>
+
+      <ul class="choice-list" id="choiceList"></ul>
+
+      <div class="empty-state" id="emptyState">
+        <span class="empty-star">✦</span>
+        <p>YOUR STORY STARTS HERE</p>
+        <span>먼저 선택지를 추가해 주세요.</span>
+      </div>
+
+      <div class="list-actions">
+        <button type="button" class="text-button" id="clearButton">
+          CLEAR ALL
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>777 · THE LUCKY CLUB</span>
+    <span>학부/학과 · 학번 · 이름</span>
+  </footer>
+</body>
+</html>
+```
